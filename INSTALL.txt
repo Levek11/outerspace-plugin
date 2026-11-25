@@ -1,0 +1,24 @@
+Installing OuterSpace in Logic Pro
+==================================
+
+1. Unzip OuterSpace-AU.zip. You get OuterSpace.component.
+
+2. Move it into your Components folder:
+     ~/Library/Audio/Plug-Ins/Components/
+   (In Finder: Go > Go to Folder..., paste the path above.)
+
+3. The build is not notarized by Apple, so clear the download flag once.
+   Open Terminal and run:
+     xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/Components/OuterSpace.component
+
+4. Open Logic Pro. If OuterSpace doesn't show up, open
+   Logic Pro > Settings > Plug-in Manager and click "Reset & Rescan Selection".
+
+5. Audio FX slot > Audio Units > Levek11 > OuterSpace.
+
+Quick start
+-----------
+- On your lead vocal: insert OuterSpace, click SEND. Name it (e.g. "Lead Vocal").
+- On the piano / pads / guitars: insert OuterSpace, leave it on CARVE, and pick
+  "Lead Vocal" under LISTEN TO. Start with Amount around 15%.
+- Narrow LOW / HIGH on the display to where the clash is (often 200 Hz - 4 kHz).
