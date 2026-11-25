@@ -3,7 +3,7 @@
 #include "PluginProcessor.h"
 #include "ui/OuterLookAndFeel.h"
 #include "ui/SpectrumDisplay.h"
-#include "ui/BatToggle.h"
+#include "ui/RockerSwitch.h"
 
 class OuterSpaceEditor : public juce::AudioProcessorEditor,
                          public juce::Timer
@@ -30,7 +30,7 @@ private:
 
     juce::ComboBox sourceBox;
     outerspace::ui::SpectrumDisplay display;
-    outerspace::ui::BatToggle roleSwitch { "CARVE", "SEND" };
+    outerspace::ui::RockerSwitch roleSwitch { "CARVE", "SEND" };
     juce::Slider amount, lowKnob, highKnob;
     juce::TextEditor sendName;
 

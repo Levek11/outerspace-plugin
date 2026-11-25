@@ -28,7 +28,7 @@ Built in the cloud.
 | **Amount** | How deep the carve goes (up to 24 dB where the overlap is total). 10-20% is a good start. Double-click to reset. |
 | **Low Cut / High Cut** | Carve only between these. Turn the small knobs or drag the LOW / HIGH markers on the screen. Double-click a knob to reset it. |
 | **Listen to** | The track to make room for (see below). |
-| **CARVE / SEND switch** | This instance's role. |
+| **CARVE / SEND rocker** | This instance's role. |
 | **LINK lamp** | Green: hearing the track it listens to (or, on a send, sending). Amber: something's missing; the screen says what. |
 
 On the screen: **cyan** is the track you're listening to, **violet** is
@@ -40,7 +40,7 @@ Logic doesn't let a plugin see your track list or take audio from other
 tracks itself, so there are two ways to do it:
 
 1. **OuterSpace sends (recommended).** Put OuterSpace on the vocal and click
-   **SEND** on the toggle switch. It passes the vocal through untouched and appears by name
+   **SEND** on the rocker switch. It passes the vocal through untouched and appears by name
    (the track's name when Logic provides it; click the name on the screen to rename). On the
    piano, open OuterSpace and pick that name under **LISTEN TO**. Any number of
    tracks can listen to the same send. Sends line up by song position, so the
@@ -85,7 +85,7 @@ Source/dsp/Spacer.*            analysis, smart-overlap curve, compensated bells
 Source/link/SourceRegistry.*   sends and listeners between instances
 Source/PluginProcessor.*       buses, roles, state
 Source/PluginEditor.*          the window
-Source/ui/                     hardware look (plate, knobs, LEDs, switch), screen
+Source/ui/                     hardware look (plate, knobs, LEDs, rocker switch), screen
 Tests/DspTest.cpp              headless checks, run in CI
 ```
 
