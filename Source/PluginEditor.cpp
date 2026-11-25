@@ -262,9 +262,12 @@ void OuterSpaceEditor::paint (juce::Graphics& g)
     Hardware::drawLed (g, linkLed, 4.5f, linkColour, linkBrightness);
     Hardware::drawSilk (g, "LINK", juce::Rectangle<float> (0, 0, 60, 12).withCentre (linkLed.translated (0, 18)), 10.0f);
 
-    // Engraved rings around the Amount knob, fading toward the bottom
+    // Engraved rings around the Amount knob, fading toward the bottom.
+    // They stop short of the screen's frame where they'd run into it.
     {
         const auto c = amountCentre.toFloat();
+        juce::Graphics::ScopedSaveState clipRings (g);
+        g.excludeClipRegion (screenArea.expanded (8));
         for (float r : { 132.0f, 150.0f })
         {
             juce::Path ring;
