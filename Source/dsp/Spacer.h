@@ -20,7 +20,7 @@ constexpr float kMaxDepthDb = 24.0f;   // cut at Amount 100%, where the overlap 
 
 struct Settings
 {
-    float amount = 0.3f;        // 0..1
+    float amount = 0.0f;        // 0..1
     float lowCutHz = 20.0f;     // carve only above this
     float highCutHz = 20000.0f; // ... and below this
 };

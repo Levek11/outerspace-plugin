@@ -29,7 +29,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
                                                         StringArray { "Carve", "Send" }, 0));
 
     layout.add (std::make_unique<AudioParameterFloat> (
-        ParameterID { amount, 1 }, "Amount", NormalisableRange<float> (0.0f, 100.0f, 0.1f), 30.0f,
+        ParameterID { amount, 1 }, "Amount", NormalisableRange<float> (0.0f, 100.0f, 0.1f), 0.0f,
         AudioParameterFloatAttributes().withLabel ("%")
             .withStringFromValueFunction ([] (float v, int) { return String (juce::roundToInt (v)) + "%"; })));
 

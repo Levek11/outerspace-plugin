@@ -25,7 +25,7 @@ Built in the cloud.
 
 | Control | What it does |
 |---|---|
-| **Amount** | How deep the carve goes (up to 24 dB where the overlap is total). 10-20% is a good start. Double-click to reset. |
+| **Amount** | How deep the carve goes (up to 24 dB where the overlap is total). Starts at 0% (no effect) on a new instance; 10-20% is a good start. Double-click to reset to 0. |
 | **Low Cut / High Cut** | Carve only between these. Turn the small knobs or drag the LOW / HIGH markers on the screen. Double-click a knob to reset it. |
 | **Listen to** | The track to make room for (see below). |
 | **CARVE / SEND rocker** | This instance's role. |

@@ -52,7 +52,7 @@ OuterSpaceEditor::OuterSpaceEditor (OuterSpaceProcessor& p)
     amountAtt = std::make_unique<SliderAttachment> (proc.apvts, params::amount, amount);
     lowAtt    = std::make_unique<SliderAttachment> (proc.apvts, params::lowCut, lowKnob);
     highAtt   = std::make_unique<SliderAttachment> (proc.apvts, params::highCut, highKnob);
-    amount.setDoubleClickReturnValue (true, 30.0);
+    amount.setDoubleClickReturnValue (true, 0.0);
     lowKnob.setDoubleClickReturnValue (true, 20.0);
     highKnob.setDoubleClickReturnValue (true, 20000.0);
 
