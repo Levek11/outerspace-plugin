@@ -17,8 +17,8 @@ public:
     void setStatus (const juce::String& text, juce::Colour c) { status = text; statusColour = c; }
     /** Shows a value (e.g. "AMOUNT 35%") at the top of the screen for a moment. */
     void showReadout (const juce::String& text) { readout = text; readoutUntil = juce::Time::getMillisecondCounter() + 1400; }
-    /** Send mode: the screen shows the send's name (an editor on top) and its level. */
-    void setSendMode (bool send, float levelDb) { sendMode = send; sendLevel = levelDb; }
+    /** Send mode: the screen shows the send's name (the track's name) and its level. */
+    void setSendMode (bool send, float levelDb, const juce::String& name) { sendMode = send; sendLevel = levelDb; sendName = name; }
     juce::Rectangle<int> nameArea() const;
 
     void paint (juce::Graphics&) override;
@@ -43,7 +43,7 @@ private:
     int dragging = -1, hover = -1;
     bool active = true, sendMode = false;
     float sendLevel = -100.0f;
-    juce::String status, readout;
+    juce::String status, readout, sendName;
     juce::Colour statusColour;
     juce::uint32 readoutUntil = 0;
 };

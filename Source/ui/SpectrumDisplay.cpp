@@ -93,6 +93,9 @@ void SpectrumDisplay::paint (juce::Graphics& g)
         g.setFont (Fonts::lcd (12.0f));
         g.setColour (lcdDim.brighter (0.3f));
         g.drawText ("SENDING AS", nameArea().toFloat().translated (0, -26).withHeight (18), juce::Justification::centred);
+        g.setFont (Fonts::lcd (32.0f));
+        g.setColour (lcd);
+        g.drawFittedText (sendName, nameArea(), juce::Justification::centred, 1, 0.6f);
 
         // Segmented level meter
         const auto m = nameArea().toFloat().translated (0, 66).withHeight (10).reduced (30, 0);
@@ -108,7 +111,7 @@ void SpectrumDisplay::paint (juce::Graphics& g)
         }
         g.setFont (Fonts::lcd (11.0f));
         g.setColour (lcdDim.brighter (0.2f));
-        g.drawText ("CLICK THE NAME TO RENAME IT", m.translated (0, 18).withHeight (14), juce::Justification::centred);
+        g.drawText ("NAMED AFTER THIS TRACK", m.translated (0, 18).withHeight (14), juce::Justification::centred);
     }
     else
     {

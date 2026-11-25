@@ -181,20 +181,10 @@ OuterSpaceProcessor::ListenStatus OuterSpaceProcessor::getListenStatus() const
 
 juce::String OuterSpaceProcessor::getSendName() const { return sendName; }
 
-void OuterSpaceProcessor::setSendName (const juce::String& name)
-{
-    const auto trimmed = name.trim();
-    if (trimmed.isEmpty() || trimmed == sendName) return;
-    sendName = trimmed;
-    sendNameCustom = true;
-    Registry::get().rename (sendSlot, sendName);
-    updateHostDisplay (juce::AudioProcessorListener::ChangeDetails().withNonParameterStateChanged (true));
-}
-
 void OuterSpaceProcessor::updateTrackProperties (const TrackProperties& properties)
 {
-    // Logic and other hosts may tell us the track's name: use it as the send's
-    // name until the user types their own.
+    // Logic tells us the track's name (and tells us again when it's renamed):
+    // the send is always named after its track.
     juce::String name;
    #if JUCE_MAJOR_VERSION >= 8
     if (properties.name.has_value()) name = *properties.name;
@@ -204,13 +194,17 @@ void OuterSpaceProcessor::updateTrackProperties (const TrackProperties& properti
     name = name.trim();
     if (name.isEmpty()) return;
 
-    juce::MessageManager::callAsync ([safe = juce::WeakReference<OuterSpaceProcessor> (this), name]
+    auto apply = [safe = juce::WeakReference<OuterSpaceProcessor> (this), name]
     {
         auto* self = safe.get();
-        if (self == nullptr || self->sendNameCustom || name == self->sendName) return;
+        if (self == nullptr) return;
+        self->gotTrackName = true;
+        if (name == self->sendName) return;
         self->sendName = name;
         Registry::get().rename (self->sendSlot, self->sendName);
-    });
+    };
+    if (juce::MessageManager::existsAndIsCurrentThread()) apply();
+    else juce::MessageManager::callAsync (apply);
 }
 
 void OuterSpaceProcessor::syncSendSlot()
@@ -231,7 +225,6 @@ void OuterSpaceProcessor::getStateInformation (juce::MemoryBlock& destData)
     juce::ValueTree link ("Link");
     link.setProperty ("sendId", sendId, nullptr);
     link.setProperty ("sendName", sendName, nullptr);
-    link.setProperty ("sendNameCustom", sendNameCustom, nullptr);
     link.setProperty ("listenId", listenId, nullptr);
     link.setProperty ("listenName", listenName, nullptr);
     state.removeChild (state.getChildWithName ("Link"), nullptr);
@@ -255,8 +248,8 @@ void OuterSpaceProcessor::setStateInformation (const void* data, int sizeInBytes
     {
         auto& reg = Registry::get();
         juce::String id = link.getProperty ("sendId", sendId).toString();
-        sendName = link.getProperty ("sendName", sendName).toString();
-        sendNameCustom = (bool) link.getProperty ("sendNameCustom", false);
+        if (! gotTrackName)   // the saved name is only a stand-in until Logic reports the track's name
+            sendName = link.getProperty ("sendName", sendName).toString();
         if (id != sendId)
         {
             // Take back this send's saved id, so carve instances find it again.

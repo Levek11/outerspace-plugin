@@ -50,7 +50,11 @@ int main (int argc, char** argv)
     save ("carve.png");
 
     p.apvts.getParameter (params::role)->setValueNotifyingHost (1.0f);
-    p.setSendName ("Lead Vocal");
+    {
+        juce::AudioProcessor::TrackProperties tp;
+        tp.name = juce::String ("Lead Vocal");
+        p.updateTrackProperties (tp);
+    }
     for (int blk = 0; blk < 20; ++blk) p.processBlock (buf, midi);
     for (int i = 0; i < 3; ++i) dynamic_cast<juce::Timer*> (ed.get())->timerCallback();
     save ("send.png");

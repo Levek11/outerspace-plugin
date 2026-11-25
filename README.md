@@ -41,7 +41,7 @@ tracks itself, so there are two ways to do it:
 
 1. **OuterSpace sends (recommended).** Put OuterSpace on the vocal and click
    **SEND** on the rocker switch. It passes the vocal through untouched and appears by name
-   (the track's name when Logic provides it; click the name on the screen to rename). On the
+   (named after its track, and it follows if you rename the track). On the
    piano, open OuterSpace and pick that name under **LISTEN TO**. Any number of
    tracks can listen to the same send. Sends line up by song position, so the
    carve stays in time even when Logic processes the tracks in a different

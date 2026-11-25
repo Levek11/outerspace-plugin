@@ -61,17 +61,6 @@ OuterSpaceEditor::OuterSpaceEditor (OuterSpaceProcessor& p)
     lowKnob.onValueChange  = [this, hz] { if (lowKnob.isMouseButtonDown()) display.showReadout ("LOW CUT " + hz (lowKnob.getValue())); };
     highKnob.onValueChange = [this, hz] { if (highKnob.isMouseButtonDown()) display.showReadout ("HIGH CUT " + hz (highKnob.getValue())); };
 
-    // Send name, typed straight onto the screen
-    sendName.setFont (Fonts::lcd (32.0f));
-    sendName.setJustification (juce::Justification::centred);
-    sendName.setIndents (8, 8);
-    sendName.setTextToShowWhenEmpty ("LEAD VOCAL", colours::lcdDim);
-    sendName.setTooltip ("This track's name in the LISTEN TO lists.");
-    sendName.onReturnKey = [this] { proc.setSendName (sendName.getText()); sendName.giveAwayKeyboardFocus(); };
-    sendName.onFocusLost = [this] { proc.setSendName (sendName.getText()); };
-    sendName.onEscapeKey = [this] { sendName.setText (proc.getSendName(), false); sendName.giveAwayKeyboardFocus(); };
-    addChildComponent (sendName);
-
     setSize (width, height);
     faceplate = Hardware::makeFaceplate (width, height, 2.0f);
 
@@ -111,9 +100,6 @@ void OuterSpaceEditor::updateRoleView()
     sourceBox.setEnabled (! send);
     sourceBox.setAlpha (send ? 0.45f : 1.0f);
 
-    sendName.setVisible (send);
-    if (send && ! sendName.hasKeyboardFocus (true))
-        sendName.setText (proc.getSendName(), false);
 
     lastRoleSend = send;
     repaint();
@@ -182,9 +168,7 @@ void OuterSpaceEditor::timerCallback()
     if (send)
     {
         const float lvl = proc.getSendLevelDb();
-        display.setSendMode (true, lvl);
-        if (! sendName.hasKeyboardFocus (true) && sendName.getText() != proc.getSendName())
-            sendName.setText (proc.getSendName(), false);
+        display.setSendMode (true, lvl, proc.getSendName());
         const bool live = lvl > -60.0f;
         display.setStatus (live ? "Sending as " + proc.getSendName() + " - audio passes through untouched"
                                 : "Waiting for audio on this track", live ? colours::green : colours::silkDim);
@@ -192,7 +176,7 @@ void OuterSpaceEditor::timerCallback()
     }
     else
     {
-        display.setSendMode (false, -100.0f);
+        display.setSendMode (false, -100.0f, {});
         if (++tick % 15 == 0) rebuildSourceList (false);
 
         using S = OuterSpaceProcessor::ListenStatus;
@@ -230,12 +214,6 @@ void OuterSpaceEditor::paint (juce::Graphics& g)
 {
     using namespace colours;
     g.drawImage (faceplate, getLocalBounds().toFloat());
-
-    // Screws
-    Hardware::drawScrew (g, { 20.0f, 20.0f }, 6.0f, 0.35f);
-    Hardware::drawScrew (g, { (float) width - 20.0f, 20.0f }, 6.0f, 1.1f);
-    Hardware::drawScrew (g, { 20.0f, (float) height - 20.0f }, 6.0f, 0.8f);
-    Hardware::drawScrew (g, { (float) width - 20.0f, (float) height - 20.0f }, 6.0f, 0.1f);
 
     // Wordmark, printed on the plate (a hairline shadow under the ink)
     {
@@ -308,5 +286,4 @@ void OuterSpaceEditor::resized()
     amount.setBounds (juce::Rectangle<int> (amountSize, amountSize).withCentre (amountCentre));
     lowKnob.setBounds (juce::Rectangle<int> (smallSize, smallSize).withCentre (lowCentre));
     highKnob.setBounds (juce::Rectangle<int> (smallSize, smallSize).withCentre (highCentre));
-    sendName.setBounds (display.nameArea().translated (screenArea.getX(), screenArea.getY()));
 }

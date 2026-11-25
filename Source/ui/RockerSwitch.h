@@ -21,9 +21,10 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-        // Press the half you want, like the real thing
-        const bool want = e.position.y > paddle().getCentreY();
-        if (want != isDown) { isDown = want; repaint(); if (onChange) onChange (isDown); }
+        juce::ignoreUnused (e);
+        isDown = ! isDown;   // a click anywhere on the switch flips it
+        repaint();
+        if (onChange) onChange (isDown);
     }
 
     void resized() override { texture = {}; }

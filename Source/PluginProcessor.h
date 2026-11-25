@@ -52,8 +52,9 @@ public:
     ListenStatus getListenStatus() const;
 
     // --- Send: this track's name in the lists (message thread) ---
+    /** The send's name: this track's name, as Logic reports it. */
     juce::String getSendName() const;
-    void setSendName (const juce::String& name);    // user rename
+    bool hasTrackName() const noexcept { return gotTrackName; }
     float getSendLevelDb() const noexcept { return sendLevelDb.load(); }
 
     outerspace::DisplayData& getDisplay() noexcept { return spacer.getDisplay(); }
@@ -74,7 +75,7 @@ private:
 
     // Send
     juce::String sendId, sendName;
-    bool sendNameCustom = false;
+    bool gotTrackName = false;
     int sendSlot = -1;
     std::atomic<int> sendSlotAudio { -1 };
     std::atomic<float> sendLevelDb { -100.0f };

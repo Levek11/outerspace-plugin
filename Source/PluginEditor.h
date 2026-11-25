@@ -32,7 +32,6 @@ private:
     outerspace::ui::SpectrumDisplay display;
     outerspace::ui::RockerSwitch roleSwitch { "CARVE", "SEND" };
     juce::Slider amount, lowKnob, highKnob;
-    juce::TextEditor sendName;
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<SliderAttachment> amountAtt, lowAtt, highAtt;

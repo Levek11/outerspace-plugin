@@ -18,7 +18,7 @@ Installing OuterSpace in Logic Pro
 
 Quick start
 -----------
-- On your lead vocal: insert OuterSpace, click SEND. Name it (e.g. "Lead Vocal").
+- On your lead vocal: insert OuterSpace and click the switch to SEND. It takes the track's name.
 - On the piano / pads / guitars: insert OuterSpace, leave it on CARVE, and pick
-  "Lead Vocal" under LISTEN TO. Start with Amount around 15%.
+  the vocal track's name under LISTEN TO. Start with Amount around 15%.
 - Narrow LOW / HIGH on the display to where the clash is (often 200 Hz - 4 kHz).
