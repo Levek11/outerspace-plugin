@@ -215,19 +215,38 @@ void OuterSpaceEditor::paint (juce::Graphics& g)
     using namespace colours;
     g.drawImage (faceplate, getLocalBounds().toFloat());
 
-    // Wordmark, printed on the plate (a hairline shadow under the ink)
+    // Wordmark, printed on the plate. Michroma has one weight, so the ink is
+    // thickened with a fine outline for a bolder logo.
     {
         const auto f = Fonts::display (25.0f).withExtraKerningFactor (0.06f);
-        const int w = juce::roundToInt (juce::GlyphArrangement::getStringWidth (f, "OUTER"));
-        g.setFont (f);
-        for (auto [dy, col] : { std::pair { 1.2f, juce::Colours::black.withAlpha (0.6f) }, std::pair { 0.0f, juce::Colour (0xffd5dae4) } })
+        auto glyphs = [&f] (const juce::String& text, float x, float y)
         {
-            g.setColour (col);
-            g.drawText ("OUTER", juce::Rectangle<float> (44.0f, 36.0f + dy, 200.0f, 32.0f), juce::Justification::centredLeft);
-            g.setColour (dy > 0 ? col : gold);
-            g.drawText ("SPACE", juce::Rectangle<float> (44.0f + (float) w + 3.0f, 36.0f + dy, 200.0f, 32.0f), juce::Justification::centredLeft);
+            juce::GlyphArrangement ga;
+            ga.addLineOfText (f, text, x, y);
+            juce::Path p;
+            ga.createPath (p);
+            return p;
+        };
+        const float baseline = 61.0f;
+        const auto outer = glyphs ("OUTER", 44.0f, baseline);
+        const auto space = glyphs ("SPACE", 44.0f + outer.getBounds().getWidth() + 6.0f, baseline);
+        const juce::PathStrokeType ink (0.9f, juce::PathStrokeType::mitered);
+
+        for (auto* p : { &outer, &space })
+        {
+            const auto shadowT = juce::AffineTransform::translation (0.0f, 1.3f);
+            g.setColour (juce::Colours::black.withAlpha (0.6f));
+            g.fillPath (*p, shadowT);
+            g.strokePath (*p, ink, shadowT);
         }
-        Hardware::drawSilk (g, "SPECTRAL CARVER", { 45.0f, 68.0f, 220.0f, 12.0f }, 8.5f, juce::Justification::centredLeft, true);
+        g.setColour (juce::Colour (0xffd5dae4));
+        g.fillPath (outer);
+        g.strokePath (outer, ink);
+        g.setColour (gold);
+        g.fillPath (space);
+        g.strokePath (space, ink);
+
+        Hardware::drawSilk (g, "SPECTRAL CARVER", { 45.0f, 68.0f, 240.0f, 13.0f }, 9.35f, juce::Justification::centredLeft, true);
     }
 
     // LISTEN TO

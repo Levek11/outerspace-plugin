@@ -32,8 +32,11 @@ public:
     void paint (juce::Graphics& g) override
     {
         const auto b = getLocalBounds().toFloat();
-        Hardware::drawSilk (g, top, b.withHeight (14.0f), 10.5f, juce::Justification::centred, isDown);
-        Hardware::drawSilk (g, bottom, b.withTrimmedTop (b.getHeight() - 14.0f), 10.5f, juce::Justification::centred, ! isDown);
+        g.setFont (Fonts::silk (11.0f));
+        g.setColour (isDown ? juce::Colour (0xff5d6068) : juce::Colour (0xffd2d5dc));
+        g.drawText (top, b.withHeight (14.0f), juce::Justification::centred, false);
+        g.setColour (isDown ? juce::Colour (0xffd2d5dc) : juce::Colour (0xff5d6068));
+        g.drawText (bottom, b.withTrimmedTop (b.getHeight() - 14.0f), juce::Justification::centred, false);
 
         const auto bezel = bezelRect();
         const auto hole = bezel.reduced (5.5f);
@@ -57,68 +60,49 @@ public:
         g.setColour (juce::Colour (0xff030304));
         g.fillRoundedRectangle (hole, 2.0f);
 
-        // --- Paddle ------------------------------------------------------------------
-        const float mid = pad.getCentreY();
-        auto pressed = isDown ? pad.withTop (mid) : pad.withBottom (mid);
-        auto raised  = isDown ? pad.withBottom (mid) : pad.withTop (mid);
-        const float lift = 3.0f;   // the raised end stands out of the bezel
-        raised = isDown ? raised.withTop (raised.getY() - lift).expanded (0.8f, 0) : raised.withBottom (raised.getBottom() + lift).expanded (0.8f, 0);
+        // --- Paddle -----------------------------------------------------------------
+        // Engaged half: pressed in, flat, lighter grey. Other half: tilted out,
+        // dark, with the lit lip of its raised end showing at the outer edge.
+        const float mid = std::round (pad.getCentreY());
+        const auto topHalf = pad.withBottom (mid), bottomHalf = pad.withTop (mid);
+        const auto engaged = isDown ? bottomHalf : topHalf;
+        const auto raised  = isDown ? topHalf : bottomHalf;
 
-        // Pressed half: flush and tilted slightly away; lighter near the crest
-        if (isDown)
-            g.setGradientFill (juce::ColourGradient (juce::Colour (0xff2c2f36), 0, pressed.getY(), juce::Colour (0xff1b1d22), 0, pressed.getBottom(), false));
-        else
-            g.setGradientFill (juce::ColourGradient (juce::Colour (0xff2a2d34), 0, pressed.getY(), juce::Colour (0xff33363e), 0, pressed.getBottom(), false));
-        g.fillRect (pressed);
-        {
-            // thin shadow line where the pressed end tucks under the bezel lip
-            const auto gap = isDown ? pressed.withTop (pressed.getBottom() - 1.2f) : pressed.withHeight (1.2f);
-            g.setColour (juce::Colours::black.withAlpha (0.7f));
-            g.fillRect (gap);
-        }
-
-        // Raised half casts a shadow onto the pressed half (light from the top)
-        {
-            juce::Path r; r.addRectangle (raised);
-            juce::DropShadow (juce::Colours::black.withAlpha (0.9f), 6, { 0, isDown ? 4 : 2 }).drawForPath (g, r);
-        }
-
-        // Raised half: brighter toward its lifted end when it's the top half
-        // (facing the light), darker when it's the bottom half (facing away)
-        if (isDown)
-            g.setGradientFill (juce::ColourGradient (juce::Colour (0xff5d626e), 0, raised.getY(), juce::Colour (0xff363a43), 0, raised.getBottom(), false));
-        else
-            g.setGradientFill (juce::ColourGradient (juce::Colour (0xff3d4049), 0, raised.getY(), juce::Colour (0xff1c1e23), 0, raised.getBottom(), false));
+        g.setColour (juce::Colour (0xff35383f));
+        g.fillRect (engaged);
+        g.setColour (juce::Colour (0xff1f2024));
         g.fillRect (raised);
 
-        // The lifted end shows its thickness: a lit face on top, a dark face at the bottom
+        // the lip at the raised end: a dark band, then the lit edge face
+        const float lipH = std::round (raised.getHeight() * 0.11f), bandH = std::round (raised.getHeight() * 0.07f);
         if (isDown)
         {
-            const auto face = raised.withHeight (3.0f);
-            g.setGradientFill (juce::ColourGradient (juce::Colour (0xff8a909c), 0, face.getY(), juce::Colour (0xff4a4e58), 0, face.getBottom(), false));
-            g.fillRect (face);
+            const auto lip = raised.withHeight (lipH);
+            g.setGradientFill (juce::ColourGradient (juce::Colour (0xff4a4d55), 0, lip.getY(), juce::Colour (0xff2c2e34), 0, lip.getBottom(), false));
+            g.fillRect (lip);
+            g.setColour (juce::Colour (0xff17181b));
+            g.fillRect (raised.withTrimmedTop (lipH).withHeight (bandH));
         }
         else
         {
-            const auto face = raised.withTop (raised.getBottom() - 3.0f);
-            g.setColour (juce::Colour (0xff0c0d10));
-            g.fillRect (face);
+            const auto lip = raised.withTop (raised.getBottom() - lipH);
+            g.setGradientFill (juce::ColourGradient (juce::Colour (0xff2e3037), 0, lip.getY(), juce::Colour (0xff474a52), 0, lip.getBottom(), false));
+            g.fillRect (lip);
+            g.setColour (juce::Colour (0xff18191c));
+            g.fillRect (raised.withTrimmedBottom (lipH).withTop (raised.getBottom() - lipH - bandH));
         }
 
-        // Crest where the halves meet
-        const float crestY = isDown ? raised.getBottom() - 0.5f : raised.getY() + 0.5f;
-        g.setColour (juce::Colours::white.withAlpha (isDown ? 0.18f : 0.38f));
-        g.drawHorizontalLine ((int) crestY, raised.getX() + 0.5f, raised.getRight() - 0.5f);
-        // side edges
-        g.setColour (juce::Colours::white.withAlpha (0.12f));
-        g.drawVerticalLine ((int) raised.getX(), raised.getY(), raised.getBottom());
-        g.setColour (juce::Colours::black.withAlpha (0.45f));
-        g.drawVerticalLine ((int) raised.getRight() - 1, raised.getY(), raised.getBottom());
+        // the seam between the halves, and the thin dark gaps along the sides
+        g.setColour (juce::Colours::black.withAlpha (0.35f));
+        g.drawHorizontalLine ((int) mid, pad.getX(), pad.getRight());
+        g.setColour (juce::Colours::black.withAlpha (0.75f));
+        g.fillRect (pad.withWidth (1.2f));
+        g.fillRect (pad.withLeft (pad.getRight() - 1.2f));
 
         // --- Matte texture over bezel and paddle -----------------------------------------
         if (! texture.isValid()) texture = makeTexture (getWidth(), getHeight());
         g.saveState();
-        juce::Path clip; clip.addRoundedRectangle (bezel, 3.5f); clip.addRectangle (raised);
+        juce::Path clip; clip.addRoundedRectangle (bezel, 3.5f);
         g.reduceClipRegion (clip);
         g.drawImageAt (texture, 0, 0);
         g.restoreState();
