@@ -14,7 +14,6 @@ OuterSpaceProcessor::OuterSpaceProcessor()
     pAmount = apvts.getRawParameterValue (params::amount);
     pLow    = apvts.getRawParameterValue (params::lowCut);
     pHigh   = apvts.getRawParameterValue (params::highCut);
-    pFreeze = apvts.getRawParameterValue (params::freeze);
 
     sendId = juce::Uuid().toString();
     sendName = defaultSendName();
@@ -133,7 +132,6 @@ void OuterSpaceProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     s.amount = pAmount->load() / 100.0f;
     s.lowCutHz = pLow->load();
     s.highCutHz = pHigh->load();
-    s.freeze = pFreeze->load() > 0.5f;
     spacer.setSettings (s);
     spacer.process (main.getArrayOfWritePointers(), numMain, side, n);
 }

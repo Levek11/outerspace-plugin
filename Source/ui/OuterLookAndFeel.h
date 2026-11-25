@@ -1,32 +1,49 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <map>
 
 namespace outerspace::ui
 {
 namespace colours
 {
-    const juce::Colour bgTop    { 0xff0b0f1d };
-    const juce::Colour bgBottom { 0xff151a30 };
-    const juce::Colour panel    { 0xff0e1324 };
-    const juce::Colour edge     { 0xff262f4d };
-    const juce::Colour grid     { 0xff1d2540 };
-    const juce::Colour text     { 0xffd3daf0 };
-    const juce::Colour dim      { 0xff7380a6 };
-    const juce::Colour amber    { 0xffffb454 };   // the cut
-    const juce::Colour ember    { 0xffff7a45 };
-    const juce::Colour cyan     { 0xff5ce1e6 };   // the side chain
-    const juce::Colour violet   { 0xff8c7cf0 };   // this track
-    const juce::Colour ok       { 0xff63e6a0 };
-    const juce::Colour warn     { 0xffffc861 };
+    // Anodized faceplate
+    const juce::Colour plate     { 0xff1a2136 };
+    const juce::Colour plateDark { 0xff0f1424 };
+    const juce::Colour silk      { 0xffd9dfec };   // silkscreen print
+    const juce::Colour silkDim   { 0xff8c97b3 };
+    // Screen / LCD
+    const juce::Colour glass     { 0xff04070f };
+    const juce::Colour lcd       { 0xff6ee7ea };
+    const juce::Colour lcdDim    { 0xff2b6a72 };
+    // Light
+    const juce::Colour amber     { 0xffffb04a };
+    const juce::Colour ember     { 0xffff7a38 };
+    const juce::Colour cyan      { 0xff5ce1e6 };
+    const juce::Colour violet    { 0xff8c7cf0 };
+    const juce::Colour green     { 0xff52f08f };
 }
 
 struct Fonts
 {
     static juce::Font wordmark (float height);
-    static juce::Font ui (float height, bool bold = false);
+    static juce::Font lcd (float height);
+    static juce::Font silk (float height);   // panel print, spaced capitals
 };
 
-/** Slider property: "accent" = "cyan" for the small range knobs. */
+/** Drawing helpers for the hardware look. */
+struct Hardware
+{
+    /** Brushed, anodized aluminium plate with lighting and a bevelled edge. */
+    static juce::Image makeFaceplate (int w, int h, float scale);
+    static void drawScrew (juce::Graphics&, juce::Point<float> c, float r, float slotAngle);
+    static void drawSilk (juce::Graphics&, const juce::String&, juce::Rectangle<float>, float height,
+                          juce::Justification = juce::Justification::centred, bool dim = false);
+    /** A recessed window cut into the plate (screen, LCD). */
+    static void drawRecess (juce::Graphics&, juce::Rectangle<float>, float corner, float depth);
+    static void drawLed (juce::Graphics&, juce::Point<float> c, float r, juce::Colour, float brightness);
+};
+
+/** Slider properties: "size" = "small" for the range knobs; "dimmed" = true when inactive. */
 class OuterLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
@@ -35,13 +52,14 @@ public:
     void drawRotarySlider (juce::Graphics&, int x, int y, int w, int h, float pos,
                            float startAngle, float endAngle, juce::Slider&) override;
 
-    void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&, bool over, bool down) override;
-    void drawButtonText (juce::Graphics&, juce::TextButton&, bool over, bool down) override;
-    juce::Font getTextButtonFont (juce::TextButton&, int) override { return Fonts::ui (12.5f, true); }
-
     void drawComboBox (juce::Graphics&, int w, int h, bool down, int bx, int by, int bw, int bh, juce::ComboBox&) override;
-    juce::Font getComboBoxFont (juce::ComboBox&) override { return Fonts::ui (14.5f, true); }
+    juce::Font getComboBoxFont (juce::ComboBox&) override { return Fonts::lcd (15.0f); }
     void positionComboBoxText (juce::ComboBox&, juce::Label&) override;
-    juce::Font getPopupMenuFont() override { return Fonts::ui (14.5f); }
+    juce::Font getPopupMenuFont() override { return juce::Font (juce::FontOptions (15.0f)); }
+    juce::Font getLabelFont (juce::Label& l) override { return l.getFont(); }
+
+private:
+    const juce::Image& capImage (int diameterPx);
+    std::map<int, juce::Image> caps;
 };
 } // namespace outerspace::ui

@@ -14,6 +14,12 @@ public:
 
     void refresh();   // ~30 Hz, from the editor's timer
     void setActive (bool a) { active = a; }
+    void setStatus (const juce::String& text, juce::Colour c) { status = text; statusColour = c; }
+    /** Shows a value (e.g. "AMOUNT 35%") at the top of the screen for a moment. */
+    void showReadout (const juce::String& text) { readout = text; readoutUntil = juce::Time::getMillisecondCounter() + 1400; }
+    /** Send mode: the screen shows the send's name (an editor on top) and its level. */
+    void setSendMode (bool send, float levelDb) { sendMode = send; sendLevel = levelDb; }
+    juce::Rectangle<int> nameArea() const;
 
     void paint (juce::Graphics&) override;
     void mouseMove (const juce::MouseEvent&) override;
@@ -35,6 +41,10 @@ private:
     juce::RangedAudioParameter& high;
     std::array<float, kNumBands> side {}, main {}, cut {};
     int dragging = -1, hover = -1;
-    bool active = true;
+    bool active = true, sendMode = false;
+    float sendLevel = -100.0f;
+    juce::String status, readout;
+    juce::Colour statusColour;
+    juce::uint32 readoutUntil = 0;
 };
 } // namespace outerspace::ui

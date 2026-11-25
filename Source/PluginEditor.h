@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include "ui/OuterLookAndFeel.h"
 #include "ui/SpectrumDisplay.h"
+#include "ui/BatToggle.h"
 
 class OuterSpaceEditor : public juce::AudioProcessorEditor,
                          public juce::Timer
@@ -13,11 +14,11 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
 
-    static constexpr int width = 820, height = 430;
+    static constexpr int width = 600, height = 700;
 
 private:
-    void timerCallback() override;
     void rebuildSourceList (bool force);
     void sourceChosen();
     void updateRoleView();
@@ -25,38 +26,26 @@ private:
 
     OuterSpaceProcessor& proc;
     outerspace::ui::OuterLookAndFeel lnf;
-    juce::TooltipWindow tooltips { this, 600 };
+    juce::TooltipWindow tooltips { this, 700 };
 
-    // Header
-    juce::TextButton carveButton { "CARVE" }, sendButton { "SEND" };
-    juce::Label listenLabel;
     juce::ComboBox sourceBox;
-
-    // Carve
-    juce::Slider amount, lowKnob, highKnob;
-    juce::Label lowValue, highValue, lowTitle, highTitle;
-    juce::TextButton freezeButton { "FREEZE" };
     outerspace::ui::SpectrumDisplay display;
-
-    // Send
-    juce::Label sendTitle, sendHelp;
+    outerspace::ui::BatToggle roleSwitch { "CARVE", "SEND" };
+    juce::Slider amount, lowKnob, highKnob;
     juce::TextEditor sendName;
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
-    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
     std::unique_ptr<SliderAttachment> amountAtt, lowAtt, highAtt;
-    std::unique_ptr<ButtonAttachment> freezeAtt;
 
     struct Entry { juce::String id, name; };
-    std::vector<Entry> entries;      // index = combo item id - 1
+    std::vector<Entry> entries;   // index = combo item id - 1
     juce::String listSignature;
     bool lastRoleSend = false;
-
-    std::vector<juce::Point<float>> stars;
-    juce::String statusText;
-    juce::Colour statusColour;
-    float sendMeter = -100.0f;
     int tick = 0;
+
+    juce::Image faceplate;
+    juce::Colour linkColour;
+    float linkBrightness = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OuterSpaceEditor)
 };

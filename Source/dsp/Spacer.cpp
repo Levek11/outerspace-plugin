@@ -106,8 +106,7 @@ void Spacer::reset()
     for (auto& ch : bells) for (auto& s : ch) s = {};
     accSide.fill (0); accMain.fill (0);
     envSide.fill (0); envMain.fill (0);
-    target.fill (0); gainDb.fill (0); smoothGain.fill (0); frozenTarget.fill (0);
-    haveFrozen = false;
+    target.fill (0); gainDb.fill (0); smoothGain.fill (0);
     accCount = 0;
     bellsActive = false;
     for (int b = 0; b < kNumBands; ++b)
@@ -181,16 +180,7 @@ void Spacer::updateCurve() noexcept
     }
     accCount = 0;
 
-    if (settings.freeze)
-    {
-        if (! haveFrozen) { frozenTarget = target; haveFrozen = true; }
-        target = frozenTarget;
-    }
-    else
-    {
-        haveFrozen = false;
-        computeTargets (target.data());
-    }
+    computeTargets (target.data());
 
     solveGains (target.data(), gainDb.data());
 

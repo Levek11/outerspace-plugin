@@ -23,7 +23,6 @@ struct Settings
     float amount = 0.3f;        // 0..1
     float lowCutHz = 20.0f;     // carve only above this
     float highCutHz = 20000.0f; // ... and below this
-    bool freeze = false;        // hold the current curve
 };
 
 /** Per-band display data, written by the audio thread, read by the UI. */
@@ -94,9 +93,8 @@ private:
     int accCount = 0;
 
     // Curve
-    std::array<float, kNumBands> target {}, frozenTarget {}, gainDb {}, smoothGain {};
+    std::array<float, kNumBands> target {}, gainDb {}, smoothGain {};
     std::array<float, kNumBands * kNumBands> inverse {};   // interaction compensation
-    bool haveFrozen = false;
 
     // Bells: shared coefficients, state per channel
     std::array<float, kNumBands> bK {}, bA1 {}, bA2 {}, bA3 {}, bM1 {};

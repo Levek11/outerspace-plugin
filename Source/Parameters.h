@@ -7,7 +7,6 @@ inline constexpr const char* role    = "role";     // 0 = Carve, 1 = Send
 inline constexpr const char* amount  = "amount";   // %
 inline constexpr const char* lowCut  = "lowcut";   // Hz
 inline constexpr const char* highCut = "highcut";  // Hz
-inline constexpr const char* freeze  = "freeze";
 
 inline juce::String hzText (float hz, int)
 {
@@ -47,7 +46,6 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         AudioParameterFloatAttributes().withLabel ("Hz").withStringFromValueFunction (hzText)
             .withValueFromStringFunction (hzValue)));
 
-    layout.add (std::make_unique<AudioParameterBool> (ParameterID { freeze, 1 }, "Freeze", false));
     return layout;
 }
 } // namespace params

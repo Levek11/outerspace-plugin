@@ -69,7 +69,6 @@ private:
     std::atomic<float>* pAmount = nullptr;
     std::atomic<float>* pLow = nullptr;
     std::atomic<float>* pHigh = nullptr;
-    std::atomic<float>* pFreeze = nullptr;
 
     juce::AudioBuffer<float> sideScratch;
 

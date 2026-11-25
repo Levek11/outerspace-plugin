@@ -203,32 +203,20 @@ static void testCarving()
     check (std::abs (gainAt (out6, 660)) < 0.5, "High Cut at 300 Hz: no carving at 660 Hz");
 }
 
-static void testReleaseAndFreeze()
+static void testRelease()
 {
-    std::cout << "Release and freeze\n";
+    std::cout << "Release\n";
     const double fs = 48000.0;
     const int n = (int) fs * 4, half = n / 2, win = (int) (fs * 0.5);
     auto main = makeTones (fs, n, { 660.0 }, 0.2f);
     auto vocal = makeVocal (fs, n);
     for (int i = half; i < n; ++i) vocal[(size_t) i] = 0.0f;   // the singer stops halfway
 
-    auto lastGain = [&] (const std::vector<float>& out)
-    { return goertzelDb (out.data() + n - win, win, 660.0, fs) - goertzelDb (main.data() + n - win, win, 660.0, fs); };
-
     Spacer s;
     Settings st; st.amount = 0.5f;
     auto out = run (s, fs, main, &vocal, st);
-    check (std::abs (lastGain (out)) < 0.3, "cut releases after the vocal stops");
-
-    // Freeze engaged while singing: render in two halves to flip the setting
-    s.prepare (fs, 1);
-    std::vector<float> buf = main;
-    float* p = buf.data();
-    s.setSettings (st);
-    for (int i = 0; i < half; i += 512) { float* c[1] = { p + i }; s.process (c, 1, vocal.data() + i, std::min (512, half - i)); }
-    Settings fr = st; fr.freeze = true; s.setSettings (fr);
-    for (int i = half; i < n; i += 512) { float* c[1] = { p + i }; s.process (c, 1, vocal.data() + i, std::min (512, n - i)); }
-    check (lastGain (buf) < -4.0, "Freeze holds the curve after the vocal stops (" + juce::String (lastGain (buf), 1) + " dB)");
+    const double g = goertzelDb (out.data() + n - win, win, 660.0, fs) - goertzelDb (main.data() + n - win, win, 660.0, fs);
+    check (std::abs (g) < 0.3, "cut releases after the vocal stops");
 }
 
 static void testRobustness()
@@ -344,7 +332,7 @@ int main (int argc, char** argv)
     testCurveAccuracy();
     testPassThrough();
     testCarving();
-    testReleaseAndFreeze();
+    testRelease();
     testRobustness();
     testCpu();
     testLink();

@@ -3,7 +3,8 @@
 A Logic Pro (AU) mixing plugin that makes room for one track inside another.
 Put it on the piano, pads or guitars, point it at the lead vocal, and it
 carves the vocal's frequencies out of that track only where the two actually
-overlap, while the vocal sings. One big knob, a range, a freeze button.
+overlap, while the vocal sings. One big knob and a range, on a panel that
+looks and feels like a piece of studio hardware.
 Built in the cloud.
 
 ![OuterSpace, carving](docs/carve.png)
@@ -25,12 +26,12 @@ Built in the cloud.
 | Control | What it does |
 |---|---|
 | **Amount** | How deep the carve goes (up to 24 dB where the overlap is total). 10-20% is a good start. Double-click to reset. |
-| **Low Cut / High Cut** | Carve only between these. Drag the LOW / HIGH markers on the display, turn the small knobs, or double-click the value to type one. |
-| **Freeze** | Holds the current carve curve. |
+| **Low Cut / High Cut** | Carve only between these. Turn the small knobs or drag the LOW / HIGH markers on the screen. Double-click a knob to reset it. |
 | **Listen to** | The track to make room for (see below). |
-| **Carve / Send** | This instance's role. |
+| **CARVE / SEND switch** | This instance's role. |
+| **LINK lamp** | Green: hearing the track it listens to (or, on a send, sending). Amber: something's missing; the screen says what. |
 
-On the display: **cyan** is the track you're listening to, **violet** is
+On the screen: **cyan** is the track you're listening to, **violet** is
 this track, and **amber**, hanging from the top, is the cut.
 
 ## Choosing the track to listen to
@@ -39,8 +40,8 @@ Logic doesn't let a plugin see your track list or take audio from other
 tracks itself, so there are two ways to do it:
 
 1. **OuterSpace sends (recommended).** Put OuterSpace on the vocal and click
-   **SEND**. It passes the vocal through untouched and appears by name
-   (the track's name when Logic provides it; click it to rename). On the
+   **SEND** on the toggle switch. It passes the vocal through untouched and appears by name
+   (the track's name when Logic provides it; click the name on the screen to rename). On the
    piano, open OuterSpace and pick that name under **LISTEN TO**. Any number of
    tracks can listen to the same send. Sends line up by song position, so the
    carve stays in time even when Logic processes the tracks in a different
@@ -64,7 +65,7 @@ Open the latest run under **Actions**, download **OuterSpace-macOS**, and follow
 of a test vocal over a pad.
 
 The build runs the DSP tests (curve accuracy, bit-exact pass-through, carving
-only where the overlap is, low/high cut, freeze, release, sample rates, buffer
+only where the overlap is, low/high cut, release, sample rates, buffer
 size independence, CPU, send/listen alignment) and validates the AU with `auval`.
 
 ## Building locally (optional)
@@ -84,7 +85,7 @@ Source/dsp/Spacer.*            analysis, smart-overlap curve, compensated bells
 Source/link/SourceRegistry.*   sends and listeners between instances
 Source/PluginProcessor.*       buses, roles, state
 Source/PluginEditor.*          the window
-Source/ui/                     look and feel, spectrum display
+Source/ui/                     hardware look (plate, knobs, LEDs, switch), screen
 Tests/DspTest.cpp              headless checks, run in CI
 ```
 
