@@ -7,8 +7,12 @@ namespace outerspace::ui
 namespace colours
 {
     // Anodized faceplate
-    const juce::Colour plate     { 0xff1a2136 };
-    const juce::Colour plateDark { 0xff0f1424 };
+    const juce::Colour plate     { 0xff181d2a };   // powder-coated, blue-black
+    const juce::Colour plateDark { 0xff0c0f17 };
+    // Gold trim
+    const juce::Colour gold      { 0xffd9b46c };
+    const juce::Colour goldLight { 0xfff7e2b0 };
+    const juce::Colour goldDark  { 0xff7a5c28 };
     const juce::Colour silk      { 0xffd9dfec };   // silkscreen print
     const juce::Colour silkDim   { 0xff8c97b3 };
     // Screen / LCD
@@ -25,9 +29,9 @@ namespace colours
 
 struct Fonts
 {
-    static juce::Font wordmark (float height);
+    static juce::Font display (float height);   // Michroma: logo and panel print
     static juce::Font lcd (float height);
-    static juce::Font silk (float height);   // panel print, spaced capitals
+    static juce::Font silk (float height);      // panel print, spaced capitals
 };
 
 /** Drawing helpers for the hardware look. */
@@ -61,5 +65,6 @@ public:
 private:
     const juce::Image& capImage (int diameterPx);
     std::map<int, juce::Image> caps;
+    void drawKnobWell (juce::Graphics&, juce::Point<float> c, float wellR);
 };
 } // namespace outerspace::ui

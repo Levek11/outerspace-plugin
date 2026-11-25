@@ -89,4 +89,4 @@ Source/ui/                     hardware look (plate, knobs, LEDs, switch), scree
 Tests/DspTest.cpp              headless checks, run in CI
 ```
 
-The Archivo Black font is bundled under the SIL Open Font License (`assets/fonts`).
+The Michroma and Goldman fonts are bundled under the SIL Open Font License (`assets/fonts`).

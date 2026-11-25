@@ -8,11 +8,11 @@ namespace
 // Layout (the window is a fixed 600 x 700 panel)
 const juce::Rectangle<int> screenArea   { 44, 96, 512, 230 };
 const juce::Rectangle<int> selectorArea { 292, 38, 264, 38 };
-const juce::Rectangle<int> switchArea   { 52, 342, 70, 112 };
+const juce::Rectangle<int> switchArea   { 44, 346, 90, 118 };
 const juce::Point<float>   linkLed      { 522.0f, 362.0f };
 const juce::Point<int>     amountCentre { 300, 478 };
-const juce::Point<int>     lowCentre    { 116, 590 };
-const juce::Point<int>     highCentre   { 484, 590 };
+const juce::Point<int>     lowCentre    { 112, 596 };
+const juce::Point<int>     highCentre   { 488, 596 };
 constexpr int amountSize = 240, smallSize = 130;
 }
 
@@ -237,27 +237,23 @@ void OuterSpaceEditor::paint (juce::Graphics& g)
     Hardware::drawScrew (g, { 20.0f, (float) height - 20.0f }, 6.0f, 0.8f);
     Hardware::drawScrew (g, { (float) width - 20.0f, (float) height - 20.0f }, 6.0f, 0.1f);
 
-    // Wordmark: a ringed planet and the name, printed on the plate
+    // Wordmark, printed on the plate (a hairline shadow under the ink)
     {
-        const juce::Point<float> c (56.0f, 57.0f);
-        g.setColour (amber);
-        g.fillEllipse (c.x - 8.0f, c.y - 8.0f, 16.0f, 16.0f);
-        g.setColour (silk.withAlpha (0.9f));
-        g.drawEllipse (juce::Rectangle<float> (c.x - 15.0f, c.y - 4.5f, 30.0f, 9.0f), 1.6f);
-        g.setColour (amber);   // the front of the planet over the ring
-        g.fillRect (c.x - 6.5f, c.y + 0.5f, 13.0f, 3.0f);
-
-        g.setFont (Fonts::wordmark (25.0f));
-        g.setColour (silk.withAlpha (0.92f));
-        g.drawText ("OUTER", 80, 42, 100, 30, juce::Justification::centredLeft);
-        const int w = juce::roundToInt (juce::GlyphArrangement::getStringWidth (Fonts::wordmark (25.0f), "OUTER"));
-        g.setColour (amber);
-        g.drawText ("SPACE", 80 + w + 1, 42, 110, 30, juce::Justification::centredLeft);
-        Hardware::drawSilk (g, "SPECTRAL CARVER", { 81.0f, 70.0f, 200.0f, 12.0f }, 9.0f, juce::Justification::centredLeft, true);
+        const auto f = Fonts::display (25.0f).withExtraKerningFactor (0.06f);
+        const int w = juce::roundToInt (juce::GlyphArrangement::getStringWidth (f, "OUTER"));
+        g.setFont (f);
+        for (auto [dy, col] : { std::pair { 1.2f, juce::Colours::black.withAlpha (0.6f) }, std::pair { 0.0f, juce::Colour (0xffd5dae4) } })
+        {
+            g.setColour (col);
+            g.drawText ("OUTER", juce::Rectangle<float> (44.0f, 36.0f + dy, 200.0f, 32.0f), juce::Justification::centredLeft);
+            g.setColour (dy > 0 ? col : gold);
+            g.drawText ("SPACE", juce::Rectangle<float> (44.0f + (float) w + 3.0f, 36.0f + dy, 200.0f, 32.0f), juce::Justification::centredLeft);
+        }
+        Hardware::drawSilk (g, "SPECTRAL CARVER", { 45.0f, 68.0f, 220.0f, 12.0f }, 8.5f, juce::Justification::centredLeft, true);
     }
 
     // LISTEN TO
-    Hardware::drawSilk (g, "LISTEN TO", selectorArea.toFloat().withY ((float) selectorArea.getY() - 15.0f).withHeight (12.0f).translated (4.0f, 0),
+    Hardware::drawSilk (g, "LISTEN TO", selectorArea.toFloat().withY ((float) selectorArea.getY() - 16.0f).withHeight (12.0f).translated (4.0f, 0),
                         10.0f, juce::Justification::centredLeft);
 
     // Screen window
@@ -269,21 +265,32 @@ void OuterSpaceEditor::paint (juce::Graphics& g)
     Hardware::drawLed (g, linkLed, 4.5f, linkColour, linkBrightness);
     Hardware::drawSilk (g, "LINK", juce::Rectangle<float> (0, 0, 60, 12).withCentre (linkLed.translated (0, 18)), 10.0f);
 
-    // Amount: scale labels
+    // Engraved rings around the Amount knob, fading toward the bottom
     {
         const auto c = amountCentre.toFloat();
-        Hardware::drawSilk (g, "0", juce::Rectangle<float> (0, 0, 30, 14).withCentre (c.getPointOnCircumference (112.0f, juce::degreesToRadians (225.0f)).translated (-4, 10)), 11.0f);
-        Hardware::drawSilk (g, "100", juce::Rectangle<float> (0, 0, 40, 14).withCentre (c.getPointOnCircumference (112.0f, juce::degreesToRadians (495.0f)).translated (6, 10)), 11.0f);
-        Hardware::drawSilk (g, "AMOUNT", juce::Rectangle<float> (0, 0, 120, 16).withCentre (c.translated (0, 118)), 12.5f);
+        for (float r : { 132.0f, 150.0f })
+        {
+            juce::Path ring;
+            ring.addEllipse (c.x - r, c.y - r, r * 2, r * 2);
+            g.setGradientFill (juce::ColourGradient (juce::Colours::black.withAlpha (0.55f), c.x, c.y - r,
+                                                     juce::Colours::black.withAlpha (0.0f), c.x, c.y + r * 0.7f, false));
+            g.strokePath (ring, juce::PathStrokeType (1.3f));
+            g.setGradientFill (juce::ColourGradient (juce::Colours::white.withAlpha (0.07f), c.x, c.y - r,
+                                                     juce::Colours::white.withAlpha (0.0f), c.x, c.y + r * 0.7f, false));
+            g.strokePath (ring, juce::PathStrokeType (0.8f), juce::AffineTransform::translation (0.0f, 1.3f));
+        }
+        Hardware::drawSilk (g, "0", juce::Rectangle<float> (0, 0, 30, 14).withCentre (c.getPointOnCircumference (100.0f, juce::degreesToRadians (225.0f)).translated (-10, 16)), 10.0f);
+        Hardware::drawSilk (g, "100", juce::Rectangle<float> (0, 0, 44, 14).withCentre (c.getPointOnCircumference (100.0f, juce::degreesToRadians (495.0f)).translated (12, 16)), 10.0f);
+        Hardware::drawSilk (g, "AMOUNT", juce::Rectangle<float> (0, 0, 160, 16).withCentre (c.translated (0, 126)), 13.0f);
     }
 
-    // Low / high cut labels and scale ends
+    // Low / high cut: name above, scale ends below
     auto smallLabels = [&] (juce::Point<int> centre, const juce::String& name)
     {
         const auto c = centre.toFloat();
-        Hardware::drawSilk (g, "20", juce::Rectangle<float> (0, 0, 30, 12).withCentre (c.getPointOnCircumference (60.0f, juce::degreesToRadians (225.0f)).translated (-6, 8)), 9.5f, juce::Justification::centred, true);
-        Hardware::drawSilk (g, "20K", juce::Rectangle<float> (0, 0, 30, 12).withCentre (c.getPointOnCircumference (60.0f, juce::degreesToRadians (495.0f)).translated (6, 8)), 9.5f, juce::Justification::centred, true);
-        Hardware::drawSilk (g, name, juce::Rectangle<float> (0, 0, 120, 14).withCentre (c.translated (0, 66)), 11.5f);
+        Hardware::drawSilk (g, name, juce::Rectangle<float> (0, 0, 160, 14).withCentre (c.translated (0, -76)), 11.5f);
+        Hardware::drawSilk (g, "20", juce::Rectangle<float> (0, 0, 34, 12).withCentre (c.getPointOnCircumference (54.0f, juce::degreesToRadians (225.0f)).translated (-8, 14)), 8.5f, juce::Justification::centred, true);
+        Hardware::drawSilk (g, "20K", juce::Rectangle<float> (0, 0, 34, 12).withCentre (c.getPointOnCircumference (54.0f, juce::degreesToRadians (495.0f)).translated (8, 14)), 8.5f, juce::Justification::centred, true);
     };
     smallLabels (lowCentre, "LOW CUT");
     smallLabels (highCentre, "HIGH CUT");

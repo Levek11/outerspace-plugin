@@ -21,10 +21,10 @@ inline float facing (float angle) { return 0.5f + 0.5f * std::cos (angle - (-0.7
 } // namespace
 
 //==============================================================================
-juce::Font Fonts::wordmark (float height)
+juce::Font Fonts::display (float height)
 {
-    static auto tf = juce::Typeface::createSystemTypefaceFor (OuterSpaceAssets::ArchivoBlackRegular_ttf,
-                                                              OuterSpaceAssets::ArchivoBlackRegular_ttfSize);
+    static auto tf = juce::Typeface::createSystemTypefaceFor (OuterSpaceAssets::MichromaRegular_ttf,
+                                                              OuterSpaceAssets::MichromaRegular_ttfSize);
     return juce::Font (juce::FontOptions (tf).withHeight (height));
 }
 
@@ -37,7 +37,7 @@ juce::Font Fonts::lcd (float height)
 
 juce::Font Fonts::silk (float height)
 {
-    return juce::Font (juce::FontOptions (height, juce::Font::bold)).withExtraKerningFactor (0.14f);
+    return display (height).withExtraKerningFactor (0.10f);
 }
 
 //==============================================================================
@@ -50,8 +50,21 @@ juce::Image Hardware::makeFaceplate (int w, int h, float scale)
         const auto base = colours::plate;
         const float br = base.getFloatRed(), bg = base.getFloatGreen(), bb = base.getFloatBlue();
 
-        std::vector<float> row ((size_t) H);
-        for (int y = 0; y < H; ++y) row[(size_t) y] = hash ((std::uint32_t) y * 2654435761U) - 0.5f;
+        // Smooth value noise for a soft mottle across the plate
+        constexpr int cell = 48;
+        const int gw = W / cell + 2, gh = H / cell + 2;
+        std::vector<float> lattice ((size_t) (gw * gh));
+        for (int i = 0; i < gw * gh; ++i) lattice[(size_t) i] = hash ((std::uint32_t) i * 747796405U + 12345U) - 0.5f;
+        auto mottle = [&] (int x, int y)
+        {
+            const int cx = x / cell, cy = y / cell;
+            float fx = (float) (x % cell) / cell, fy = (float) (y % cell) / cell;
+            fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+            auto L = [&] (int i, int j) { return lattice[(size_t) (j * gw + i)]; };
+            const float top = L (cx, cy) + (L (cx + 1, cy) - L (cx, cy)) * fx;
+            const float bot = L (cx, cy + 1) + (L (cx + 1, cy + 1) - L (cx, cy + 1)) * fx;
+            return top + (bot - top) * fy;
+        };
 
         for (int y = 0; y < H; ++y)
         {
@@ -59,14 +72,17 @@ juce::Image Hardware::makeFaceplate (int w, int h, float scale)
             for (int x = 0; x < W; ++x)
             {
                 const float fx = (float) x / (float) W;
-                // Horizontal brushing: per-row streaks that drift slowly along x
-                const float streak = row[(size_t) y] * 0.55f
-                                   + (hash ((std::uint32_t) (y * 977 + (x / 37) * 131)) - 0.5f) * 0.25f
-                                   + (hash ((std::uint32_t) (x * 7919 + y * 104729)) - 0.5f) * 0.25f;
-                // Lighting: brighter at the top left, falling off toward the bottom
-                float light = 1.08f - 0.30f * fy - 0.08f * fx;
-                light += 0.10f * std::exp (-((fx - 0.25f) * (fx - 0.25f) * 6.0f + (fy - 0.10f) * (fy - 0.10f) * 10.0f));
-                const float k = light * (1.0f + streak * 0.11f);
+                // Powder-coat grain: fine speckle, a few brighter flecks, soft mottle
+                const float n = hash (((std::uint32_t) x * 73856093U) ^ ((std::uint32_t) y * 19349663U));
+                float grain = (n - 0.5f) * 0.16f;
+                if (n > 0.985f) grain += 0.10f;
+                if (n < 0.012f) grain -= 0.10f;
+                grain += mottle (x, y) * 0.09f;
+                // Lighting: a soft pool of light at the top centre, vignette toward the edges
+                const float dx = fx - 0.5f, dy = fy - 0.18f;
+                float light = 1.18f - 0.55f * std::sqrt (dx * dx * 1.2f + dy * dy);
+                light -= 0.18f * (std::pow (std::abs (fx - 0.5f) * 2.0f, 4.0f) + std::pow (std::abs (fy - 0.5f) * 2.0f, 4.0f));
+                const float k = juce::jmax (0.3f, light) * (1.0f + grain);
                 bd.setPixelColour (x, y, juce::Colour::fromFloatRGBA (br * k, bg * k, bb * k, 1.0f));
             }
         }
@@ -191,119 +207,120 @@ const juce::Image& OuterLookAndFeel::capImage (int d)
                 const float rr = std::sqrt (dx * dx + dy * dy);
                 if (rr > R) continue;
                 const float th = std::atan2 (dy, dx);
-                float v = 0.60f
-                        + 0.17f * std::cos (2.0f * (th + 0.80f))
-                        + 0.06f * std::cos (4.0f * th + 1.3f)
-                        + 0.035f * std::sin (rr * 1.9f) * (rr / R)
-                        + (hash ((std::uint32_t) (std::lround (th * 900.0f) + 5000)) - 0.5f) * 0.05f;
-                v += 0.10f * std::exp (-((dx + R * 0.3f) * (dx + R * 0.3f) + (dy + R * 0.35f) * (dy + R * 0.35f)) / (R * R * 0.18f));
+                // Dark gunmetal: two bright wedges of sheen (top left / bottom right),
+                // fine radial brushing, concentric lathe rings
+                const float sheen = std::pow (std::abs (std::cos (th + 0.80f)), 6.0f);
+                float v = 0.11f
+                        + 0.24f * sheen
+                        + 0.05f * std::pow (std::abs (std::sin (th + 0.80f)), 10.0f)
+                        + 0.015f * std::sin (rr * 2.3f)
+                        + (hash ((std::uint32_t) (std::lround (th * 1400.0f) + 9000)) - 0.5f) * 0.035f;
                 const float a = juce::jlimit (0.0f, 1.0f, R - rr + 0.5f);   // anti-aliased edge
-                const auto col = juce::Colour::fromRGBA (toByte (v * 0.95f), toByte (v * 0.97f), toByte (v * 1.02f), 255);
+                const auto col = juce::Colour::fromRGBA (toByte (v * 0.98f), toByte (v * 1.0f), toByte (v * 1.06f), 255);
                 bd.setPixelColour (x, y, col.withAlpha (a));
             }
     }
     return caps.emplace (d, img).first->second;
 }
 
+void OuterLookAndFeel::drawKnobWell (juce::Graphics& g, juce::Point<float> c, float wellR)
+{
+    // A round pocket milled into the plate: lip in shadow at the top, lit at the bottom
+    g.setGradientFill (juce::ColourGradient (juce::Colours::black.withAlpha (0.85f), c.x, c.y - wellR,
+                                             juce::Colours::white.withAlpha (0.16f), c.x, c.y + wellR, false));
+    g.fillEllipse (c.x - wellR - 1.5f, c.y - wellR - 1.5f, (wellR + 1.5f) * 2, (wellR + 1.5f) * 2);
+    juce::ColourGradient floor (juce::Colour (0xff0d1018), c.x, c.y - wellR * 0.6f,
+                                juce::Colour (0xff161a24), c.x, c.y + wellR, false);
+    g.setGradientFill (floor);
+    g.fillEllipse (c.x - wellR, c.y - wellR, wellR * 2, wellR * 2);
+    // inner shadow along the top edge
+    g.setGradientFill (juce::ColourGradient (juce::Colours::black.withAlpha (0.55f), c.x, c.y - wellR,
+                                             juce::Colours::transparentBlack, c.x, c.y - wellR * 0.55f, false));
+    g.fillEllipse (c.x - wellR, c.y - wellR, wellR * 2, wellR * 2);
+}
+
 void OuterLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int w, int h, float pos,
                                          float startAngle, float endAngle, juce::Slider& s)
 {
+    using namespace colours;
     const bool small = s.getProperties()["size"] == "small";
     const bool dimmed = (bool) s.getProperties()["dimmed"];
     const auto area = juce::Rectangle<float> ((float) x, (float) y, (float) w, (float) h);
     const auto c = area.getCentre();
     const float outer = juce::jmin (area.getWidth(), area.getHeight()) * 0.5f;
-    const float R = small ? outer * 0.62f : outer * 0.70f;   // knob radius; the rest is the scale / LED ring
+    const float wellR = outer * 0.93f, arcR = outer * 0.82f, R = outer * (small ? 0.64f : 0.66f);
     const float angle = startAngle + pos * (endAngle - startAngle);
+    const float lit = dimmed ? 0.3f : 1.0f;
 
-    // --- Scale printed on the plate (small) / LED ring (big) -----------------
-    if (small)
+    drawKnobWell (g, c, wellR);
+
+    // --- Value arc: a faint track, the lit gold arc with a glow, a bright tip -----
+    const float aw = small ? 2.4f : 3.0f;
     {
-        for (int i = 0; i <= 10; ++i)
-        {
-            const float a = startAngle + (endAngle - startAngle) * (float) i / 10.0f;
-            const bool major = i == 0 || i == 5 || i == 10;
-            const auto p1 = c.getPointOnCircumference (R + 6.0f, a), p2 = c.getPointOnCircumference (R + (major ? 13.0f : 10.0f), a);
-            g.setColour (colours::silk.withAlpha (major ? 0.85f : 0.5f));
-            g.drawLine ({ p1, p2 }, major ? 1.6f : 1.1f);
-        }
+        juce::Path track;
+        track.addCentredArc (c.x, c.y, arcR, arcR, 0.0f, startAngle, endAngle, true);
+        g.setColour (gold.withAlpha (0.10f));
+        g.strokePath (track, juce::PathStrokeType (aw, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
-    else
+    if (pos > 0.002f)
     {
-        constexpr int leds = 21;
-        const float ringR = R + 17.0f;
-        for (int i = 0; i < leds; ++i)
+        juce::Path arc;
+        arc.addCentredArc (c.x, c.y, arcR, arcR, 0.0f, startAngle, angle, true);
+        for (auto [width, alpha] : { std::pair { aw * 5.0f, 0.05f }, std::pair { aw * 2.8f, 0.10f }, std::pair { aw * 1.7f, 0.18f } })
         {
-            const float t = (float) i / (leds - 1);
-            const float a = startAngle + (endAngle - startAngle) * t;
-            const float lit = juce::jlimit (0.0f, 1.0f, (pos - t) * (leds - 1) + 1.0f);
-            const auto col = colours::amber.interpolatedWith (colours::ember, t);
-            Hardware::drawLed (g, c.getPointOnCircumference (ringR, a), 3.2f, col, (dimmed ? 0.25f : 1.0f) * lit);
+            g.setColour (gold.withAlpha (alpha * lit));
+            g.strokePath (arc, juce::PathStrokeType (width, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
         }
+        g.setGradientFill (juce::ColourGradient (goldDark.brighter (0.4f).withAlpha (lit), c.x - arcR, c.y + arcR,
+                                                 goldLight.withAlpha (lit), c.x + arcR, c.y - arcR, false));
+        g.strokePath (arc, juce::PathStrokeType (aw, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    {
+        const auto tip = c.getPointOnCircumference (arcR, angle);
+        const float tr = small ? 2.6f : 3.4f;
+        g.setGradientFill (juce::ColourGradient (goldLight.withAlpha (0.45f * lit), tip.x, tip.y, goldLight.withAlpha (0.0f), tip.x + tr * 4, tip.y, true));
+        g.fillEllipse (tip.x - tr * 4, tip.y - tr * 4, tr * 8, tr * 8);
+        g.setColour (juce::Colour (0xfffff6e0).withAlpha (lit));
+        g.fillEllipse (tip.x - tr, tip.y - tr, tr * 2, tr * 2);
     }
 
-    // --- Shadow on the plate ---------------------------------------------------
+    // --- Knob: shadow, dark spun-metal face, gold bevel ----------------------------
     {
         juce::Path disc;
         disc.addEllipse (c.x - R, c.y - R, R * 2, R * 2);
-        juce::DropShadow (juce::Colours::black.withAlpha (0.75f), (int) (R * 0.45f), { 0, (int) (R * 0.22f) }).drawForPath (g, disc);
-        juce::DropShadow (juce::Colours::black.withAlpha (0.6f), (int) (R * 0.10f), { 0, (int) (R * 0.05f) + 1 }).drawForPath (g, disc);
+        juce::DropShadow (juce::Colours::black.withAlpha (0.85f), (int) (R * 0.5f), { 0, (int) (R * 0.20f) }).drawForPath (g, disc);
     }
-
-    // --- Knurled skirt -----------------------------------------------------------
-    g.setGradientFill (juce::ColourGradient (juce::Colour (0xff3f4556), c.x, c.y - R,
-                                             juce::Colour (0xff12151d), c.x, c.y + R, false));
+    // outer gold bevel ring
+    g.setGradientFill (juce::ColourGradient (goldLight, c.x - R * 0.7f, c.y - R * 0.8f, goldDark.darker (0.3f), c.x + R * 0.6f, c.y + R, false));
     g.fillEllipse (c.x - R, c.y - R, R * 2, R * 2);
-
-    const int ridges = small ? 36 : 64;
-    for (int i = 0; i < ridges; ++i)
-    {
-        const float a = angle + 2.0f * pi * (float) i / (float) ridges;   // ridges turn with the knob
-        const float lightAmt = facing (a);
-        const auto p1 = c.getPointOnCircumference (R * 0.86f, a), p2 = c.getPointOnCircumference (R * 0.995f, a);
-        g.setColour (juce::Colours::white.withAlpha (0.05f + 0.20f * lightAmt));
-        g.drawLine ({ p1, p2 }, small ? 1.0f : 1.3f);
-        const float a2 = a + pi / (float) ridges;
-        g.setColour (juce::Colours::black.withAlpha (0.45f));
-        g.drawLine ({ c.getPointOnCircumference (R * 0.86f, a2), c.getPointOnCircumference (R * 0.995f, a2) }, small ? 1.0f : 1.3f);
-    }
-    g.setColour (juce::Colours::black.withAlpha (0.65f));
-    g.drawEllipse (c.x - R, c.y - R, R * 2, R * 2, 1.0f);
-
-    // --- Chamfer between skirt and cap ----------------------------------------
-    const float rc = R * 0.82f;
-    g.setGradientFill (juce::ColourGradient (juce::Colours::white.withAlpha (0.55f), c.x - rc * 0.5f, c.y - rc,
-                                             juce::Colours::black.withAlpha (0.7f), c.x + rc * 0.4f, c.y + rc, false));
-    g.fillEllipse (c.x - rc, c.y - rc, rc * 2, rc * 2);
-
-    // --- Spun aluminium cap (lighting doesn't turn with the knob) -------------
-    const float rcap = R * 0.76f;
+    // thin black gap
+    const float rGap = R - (small ? 1.6f : 2.2f);
+    g.setColour (juce::Colour (0xff07080b));
+    g.fillEllipse (c.x - rGap, c.y - rGap, rGap * 2, rGap * 2);
+    // spun face (its sheen stays put: lit from the top left)
+    const float rFace = rGap - 1.2f;
     const float scale = juce::jmax (2.0f, g.getInternalContext().getPhysicalPixelScaleFactor());
-    const int px = juce::roundToInt (rcap * 2.0f * scale);
-    g.drawImage (capImage (px), juce::Rectangle<float> (c.x - rcap, c.y - rcap, rcap * 2, rcap * 2),
-                 juce::RectanglePlacement::stretchToFit);
-    g.setColour (juce::Colours::black.withAlpha (0.35f));
-    g.drawEllipse (c.x - rcap, c.y - rcap, rcap * 2, rcap * 2, 0.8f);
+    g.drawImage (capImage (juce::roundToInt (rFace * 2.0f * scale)),
+                 juce::Rectangle<float> (c.x - rFace, c.y - rFace, rFace * 2, rFace * 2), juce::RectanglePlacement::stretchToFit);
+    // soft dome highlight and rim shading
+    g.setGradientFill (juce::ColourGradient (juce::Colours::white.withAlpha (0.10f), c.x - rFace * 0.35f, c.y - rFace * 0.45f,
+                                             juce::Colours::transparentWhite, c.x - rFace * 0.35f + rFace * 0.9f, c.y, true));
+    g.fillEllipse (c.x - rFace, c.y - rFace, rFace * 2, rFace * 2);
+    g.setColour (juce::Colours::black.withAlpha (0.5f));
+    g.drawEllipse (c.x - rFace, c.y - rFace, rFace * 2, rFace * 2, 1.0f);
 
-    // --- Engraved pointer ---------------------------------------------------------
+    // Small engraved notch at the edge, so the knob reads as turning
     {
-        const auto inner = c.getPointOnCircumference (rcap * 0.22f, angle);
-        const auto tip = c.getPointOnCircumference (rcap * 0.86f, angle);
-        g.setColour (juce::Colours::white.withAlpha (0.5f));
-        g.drawLine ({ inner.translated (0.6f, 0.9f), tip.translated (0.6f, 0.9f) }, small ? 2.0f : 3.0f);
-        g.setColour (juce::Colour (0xff15181f));
-        g.drawLine ({ inner, tip }, small ? 2.0f : 3.0f);
-        // painted dot at the tip
-        const auto dot = c.getPointOnCircumference (rcap * 0.70f, angle);
-        const float dr = small ? 2.4f : 3.6f;
-        const auto paint = small ? colours::cyan : colours::amber;
-        g.setColour (paint.withAlpha (dimmed ? 0.4f : 1.0f));
-        g.fillEllipse (dot.x - dr, dot.y - dr, dr * 2, dr * 2);
+        const auto p1 = c.getPointOnCircumference (rFace * 0.74f, angle), p2 = c.getPointOnCircumference (rFace * 0.93f, angle);
+        g.setColour (juce::Colours::black.withAlpha (0.7f));
+        g.drawLine ({ p1, p2 }, small ? 2.2f : 2.8f);
+        g.setColour (goldLight.withAlpha (0.85f * lit));
+        g.drawLine ({ p1.translated (-0.4f, -0.4f), p2.translated (-0.4f, -0.4f) }, small ? 1.1f : 1.4f);
     }
 
     if (dimmed)
     {
-        g.setColour (colours::plateDark.withAlpha (0.35f));
+        g.setColour (plateDark.withAlpha (0.4f));
         g.fillEllipse (c.x - R, c.y - R, R * 2, R * 2);
     }
 }

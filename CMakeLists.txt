@@ -56,7 +56,7 @@ juce_add_plugin(OuterSpace
 juce_add_binary_data(OuterSpaceAssets
     HEADER_NAME OuterSpaceAssets.h
     NAMESPACE OuterSpaceAssets
-    SOURCES assets/fonts/ArchivoBlack-Regular.ttf assets/fonts/Goldman-Bold.ttf)
+    SOURCES assets/fonts/Michroma-Regular.ttf assets/fonts/Goldman-Bold.ttf)
 
 set(OUTERSPACE_DSP_SOURCES
     Source/dsp/Spacer.cpp
